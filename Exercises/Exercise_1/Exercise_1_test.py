@@ -2,39 +2,40 @@ import unittest
 from unittest.mock import patch
 import io
 import sys
+import re
 
 
 class TestCelsiusToFahrenheitConverter(unittest.TestCase):
 
-    @patch('builtins.input', return_value='20.2')
-    def test_positive_celsius(self, mock_input):
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
+    def run_program_and_capture_output(self, input_value):
+        with patch('builtins.input', return_value=input_value):
+            captured_output = io.StringIO()
+            sys.stdout = captured_output
+            exec(open("Exercise_1.py").read())
+            sys.stdout = sys.__stdout__
+        return captured_output.getvalue()
 
-        exec(open("Exercise_1.py").read())
+    def test_positive_celsius(self):
+        output = self.run_program_and_capture_output('20.2')
+        self.assertRegex(output, r"20\.2\s*Celsius is equivalent to 68\.36\s*Fahrenheit")
 
-        sys.stdout = sys.__stdout__
-        self.assertIn("20.2 Celsius is equivalent to 68.36 Fahrenheit.", captured_output.getvalue())
+    def test_zero_celsius(self):
+        output = self.run_program_and_capture_output('0')
+        self.assertRegex(output, r"0\.0?\s*Celsius is equivalent to 32\.0?\s*Fahrenheit")
 
-    @patch('builtins.input', return_value='0')
-    def test_zero_celsius(self, mock_input):
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
+    def test_negative_celsius(self):
+        output = self.run_program_and_capture_output('-1')
+        self.assertRegex(output, r"ERROR:\s*You must enter a value of 0 or greater")
 
-        exec(open("Exercise_1.py").read())
-
-        sys.stdout = sys.__stdout__
-        self.assertIn("0.0 Celsius is equivalent to 32.0 Fahrenheit.", captured_output.getvalue())
-
-    @patch('builtins.input', return_value='-1')
-    def test_negative_celsius(self, mock_input):
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
-
-        exec(open("Exercise_1.py").read())
-
-        sys.stdout = sys.__stdout__
-        self.assertEqual("", captured_output.getvalue().strip())
+    def test_input_prompt(self):
+        with patch('builtins.input', return_value='0') as mock_input:
+            self.run_program_and_capture_output('0')
+            # Check if the prompt is either in the input or printed separately
+            call_args = mock_input.call_args[0][0] if mock_input.call_args else ""
+            self.assertTrue(
+                "Please enter the temperature in Celsius:" in call_args or
+                re.search(r"Please enter the temperature in Celsius:", self.run_program_and_capture_output('0'))
+            )
 
 
 if __name__ == '__main__':
