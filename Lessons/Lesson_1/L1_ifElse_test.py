@@ -1,60 +1,38 @@
-import sys
+import unittest
+from unittest.mock import patch
 import io
+import sys
 
+class TestEvenOddChecker(unittest.TestCase):
 
-def run_program_with_input(user_input):
-    # Save the original stdin and stdout
-    original_stdin = sys.stdin
-    original_stdout = sys.stdout
+    def run_program_with_input(self, user_input):
+        with patch('builtins.input', return_value=user_input):
+            captured_output = io.StringIO()
+            sys.stdout = captured_output
+            exec(open("L1_ifElse.py").read())
+            sys.stdout = sys.__stdout__
+        return captured_output.getvalue().strip()
 
-    # Create string IO objects for input and output
-    sys.stdin = io.StringIO(user_input + '\n')
-    fake_output = io.StringIO()
-    sys.stdout = fake_output
+    def test_even_numbers(self):
+        test_cases = ['0', '2', '4', '100', '1000']
+        for num in test_cases:
+            with self.subTest(num=num):
+                output = self.run_program_with_input(num)
+                self.assertEqual(output, "Your number is even!")
 
-    try:
-        # Execute the student's script
-        with open("L1_ifElse.py", "r") as file:
-            exec(file.read())
+    def test_odd_numbers(self):
+        test_cases = ['1', '3', '5', '99', '1001']
+        for num in test_cases:
+            with self.subTest(num=num):
+                output = self.run_program_with_input(num)
+                self.assertEqual(output, "Your number is odd!")
 
-        # Get the output
-        output = fake_output.getvalue()
-    finally:
-        # Restore original stdin and stdout
-        sys.stdin = original_stdin
-        sys.stdout = original_stdout
-
-    return output.strip()
-
-
-def test_even_numbers():
-    test_cases = ['0', '2', '4', '100', '1000']
-    for num in test_cases:
-        output = run_program_with_input(num)
-        assert "Your number is even!" in output, f"For input {num}, expected 'Your number is even!', but got: {output}"
-    print("All even number tests passed!")
-
-
-def test_odd_numbers():
-    test_cases = ['1', '3', '5', '99', '1001']
-    for num in test_cases:
-        output = run_program_with_input(num)
-        assert "Your number is odd!" in output, f"For input {num}, expected 'Your number is odd!', but got: {output}"
-    print("All odd number tests passed!")
-
-
-def test_negative_numbers():
-    test_cases = ['-1', '-2', '-3', '-100']
-    for num in test_cases:
-        output = run_program_with_input(num)
-        expected = "Your number is even!" if int(num) % 2 == 0 else "Your number is odd!"
-        assert expected in output, f"For input {num}, expected '{expected}', but got: {output}"
-    print("All negative number tests passed!")
-
+    def test_negative_numbers(self):
+        test_cases = ['-1', '-2', '-3', '-100']
+        for num in test_cases:
+            with self.subTest(num=num):
+                output = self.run_program_with_input(num)
+                self.assertEqual(output, "Your number is even!" if int(num) % 2 == 0 else "Your number is odd!")
 
 if __name__ == '__main__':
-    print("Running tests...")
-    test_even_numbers()
-    test_odd_numbers()
-    test_negative_numbers()
-    print("All tests completed!")
+    unittest.main()
