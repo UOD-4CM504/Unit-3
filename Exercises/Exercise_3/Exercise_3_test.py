@@ -1,62 +1,68 @@
-import unittest
-from unittest.mock import patch
-import io
 import sys
+import io
 
 
-class TestTemperatureConverter(unittest.TestCase):
+def run_test(inputs):
+    # Save the original stdin and stdout
+    original_stdin = sys.stdin
+    original_stdout = sys.stdout
 
-    @patch('builtins.input', side_effect=['1', '20.2'])
-    def test_celsius_to_fahrenheit(self, mock_input):
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
+    # Create string IO objects for input and output
+    input_string = '\n'.join(inputs) + '\n'
+    sys.stdin = io.StringIO(input_string)
+    fake_output = io.StringIO()
+    sys.stdout = fake_output
 
-        # We need to use execfile() to run the script in the current namespace
-        exec(open("Exercise_3.py").read())
+    try:
+        # Execute the student's script
+        with open("Exercise_3.py", "r") as file:
+            exec(file.read())
 
-        sys.stdout = sys.__stdout__
-        self.assertIn("20.2 Celsius is equivalent to 68.36 Fahrenheit.", captured_output.getvalue())
+        # Get the output
+        output = fake_output.getvalue()
+    finally:
+        # Restore original stdin and stdout
+        sys.stdin = original_stdin
+        sys.stdout = original_stdout
 
-    @patch('builtins.input', side_effect=['1', '-2'])
-    def test_celsius_negative_input(self, mock_input):
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
+    return output.strip()
 
-        exec(open("Exercise_3.py").read())
 
-        sys.stdout = sys.__stdout__
-        self.assertIn("ERROR: You must enter a value of 0 or greater.", captured_output.getvalue())
+def test_celsius_to_fahrenheit():
+    output = run_test(['1', '20.2'])
+    assert "20.2 Celsius is equivalent to 68.36 Fahrenheit." in output, f"Expected Celsius to Fahrenheit conversion, but got: {output}"
+    print("Celsius to Fahrenheit test passed!")
 
-    @patch('builtins.input', side_effect=['2', '70.25'])
-    def test_fahrenheit_to_celsius(self, mock_input):
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
 
-        exec(open("Exercise_3.py").read())
+def test_celsius_negative_input():
+    output = run_test(['1', '-2'])
+    assert "ERROR: You must enter a value of 0 or greater." in output, f"Expected error for negative Celsius input, but got: {output}"
+    print("Negative Celsius input test passed!")
 
-        sys.stdout = sys.__stdout__
-        self.assertIn("70.25 Fahrenheit is equivalent to 21.25 Celsius.", captured_output.getvalue())
 
-    @patch('builtins.input', side_effect=['2', '-2'])
-    def test_fahrenheit_negative_input(self, mock_input):
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
+def test_fahrenheit_to_celsius():
+    output = run_test(['2', '70.25'])
+    assert "70.25 Fahrenheit is equivalent to 21.25 Celsius." in output, f"Expected Fahrenheit to Celsius conversion, but got: {output}"
+    print("Fahrenheit to Celsius test passed!")
 
-        exec(open("Exercise_3.py").read())
 
-        sys.stdout = sys.__stdout__
-        self.assertIn("ERROR: You must enter a value of 0 or greater.", captured_output.getvalue())
+def test_fahrenheit_negative_input():
+    output = run_test(['2', '-2'])
+    assert "ERROR: You must enter a value of 0 or greater." in output, f"Expected error for negative Fahrenheit input, but got: {output}"
+    print("Negative Fahrenheit input test passed!")
 
-    @patch('builtins.input', side_effect=['3'])
-    def test_invalid_option(self, mock_input):
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
 
-        exec(open("Exercise_3.py").read())
-
-        sys.stdout = sys.__stdout__
-        self.assertIn("ERROR: Invalid option", captured_output.getvalue())
+def test_invalid_option():
+    output = run_test(['3'])
+    assert "ERROR: Invalid option" in output, f"Expected error for invalid option, but got: {output}"
+    print("Invalid option test passed!")
 
 
 if __name__ == '__main__':
-    unittest.main()
+    print("Running tests...")
+    test_celsius_to_fahrenheit()
+    test_celsius_negative_input()
+    test_fahrenheit_to_celsius()
+    test_fahrenheit_negative_input()
+    test_invalid_option()
+    print("All tests completed!")
